@@ -23,6 +23,7 @@ public:
 
 private:
 	void MoveForward(float InAxisValue);
+	void MoveRight(float InAxisValue);
 
 	UPROPERTY()
 	class ATankPawn* TankPawn;
