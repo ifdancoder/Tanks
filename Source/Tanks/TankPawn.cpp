@@ -42,9 +42,14 @@ void ATankPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	FVector NewActorLocation = GetActorLocation() + (GetActorForwardVector() * TargetMoveForwardAxis + \
-													(GetActorRightVector() * TargetMoveRightAxis)) * MoveSpeed * DeltaTime;
-	SetActorLocation(NewActorLocation);
+	FVector MoveVector = GetActorForwardVector() * TargetMoveForwardAxis + (GetActorRightVector() * TargetMoveRightAxis);
+
+	if (MoveVector.SizeSquared() != 1.f)
+	{
+		MoveVector.Normalize();
+	}
+
+	SetActorLocation(GetActorLocation() + MoveVector * DeltaTime * MoveSpeed);
 }
 
 void ATankPawn::MoveForward(float InAxisValue)
