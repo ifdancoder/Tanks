@@ -29,16 +29,30 @@ protected:
 	float FireDamage = 1.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Fire params")
+	int Ammo = 30;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Fire params")
+	int SerialShots = 4;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Fire params")
+	float TimeToReloadSeries = 0.25;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Fire params")
 	ECannonType Type = ECannonType::FireProjectile;
 
 private:
 	FTimerHandle ReloadTimerHandle;
+	FTimerHandle SeriesTimerHandle;
+
 	bool bIsReadyToFire = false;
 
 public:
 	ACannon();
 
 	void Fire();
+	void FireSpecial();
+	int GetAmmoNow();
+	void Shot();
 
 	bool IsReadyToFire();
 
@@ -48,4 +62,6 @@ protected:
 
 	void Reload();
 
+	int ShotsLeft = 0;
+	int AmmoNow = 0;
 };

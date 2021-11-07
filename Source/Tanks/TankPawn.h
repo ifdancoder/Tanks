@@ -68,6 +68,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Turret")
 	void Fire();
 
+	UFUNCTION(BlueprintCallable, Category = "Turret")
+	void FireSpecial();
+
 private:
 	void SetupCannon();
 
