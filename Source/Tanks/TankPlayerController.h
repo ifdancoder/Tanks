@@ -7,24 +7,26 @@
 #include "TankPlayerController.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class TANKS_API ATankPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-	
+
 public:
-	
 	virtual void BeginPlay() override;
 
 	// Called to bind functionality to input
 	virtual void SetupInputComponent() override;
+	virtual void Tick(float DeltaSeconds) override;
 
 private:
 	void MoveForward(float InAxisValue);
-	void MoveRight(float InAxisValue);
+	void RotateRight(float InAxisValue);
+	void Fire();
+	void FireSpecial();
 
 	UPROPERTY()
-	class ATankPawn* TankPawn;
+		class ATankPawn* TankPawn;
 };
