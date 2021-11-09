@@ -41,7 +41,7 @@ void ATankPawn::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetupCannon();
+	SetupCannon(DefaultCannonClass);
 }
 
 // Called every frame
@@ -52,7 +52,7 @@ void ATankPawn::Tick(float DeltaTime)
 	CurrentMoveForwardAxis = FMath::FInterpTo(CurrentMoveForwardAxis, TargetMoveForwardAxis, DeltaTime, MovementSmootheness);
 	FVector MoveVector = GetActorForwardVector() * CurrentMoveForwardAxis;
 	FVector NewActorLocation = GetActorLocation() + MoveVector * MoveSpeed * DeltaTime;
-	SetActorLocation(NewActorLocation);
+	SetActorLocation(NewActorLocation, true);
 
 	CurrentRotateRightAxis = FMath::FInterpTo(CurrentRotateRightAxis, TargetRotateRightAxis, DeltaTime, RotationSmootheness);
 	float Rotation = GetActorRotation().Yaw + CurrentRotateRightAxis * RotationSpeed * DeltaTime;
@@ -99,16 +99,18 @@ void ATankPawn::FireSpecial()
 	}
 }
 
-void ATankPawn::SetupCannon()
+void ATankPawn::SetupCannon(TSubclassOf<class ACannon> InCannonClass)
 {
 	if (Cannon)
 	{
 		Cannon->Destroy();
 	}
-
-	FActorSpawnParameters Params;
-	Params.Instigator = this;
-	Params.Owner = this;
-	Cannon = GetWorld()->SpawnActor<ACannon>(DefaultCannonClass, Params);
-	Cannon->AttachToComponent(CannonSpawnPoint, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	if (InCannonClass)
+	{
+		FActorSpawnParameters Params;
+		Params.Instigator = this;
+		Params.Owner = this;
+		Cannon = GetWorld()->SpawnActor<ACannon>(InCannonClass, Params);
+		Cannon->AttachToComponent(CannonSpawnPoint, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	}
 }
