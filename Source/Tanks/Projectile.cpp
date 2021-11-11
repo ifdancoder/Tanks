@@ -3,25 +3,48 @@
 #include "Projectile.h"
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "TankS.h"
+#include "Tanks.h"
+#include "ActorPoolSubsystem.h"
 
 // Sets default values
 AProjectile::AProjectile()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bStartWithTickEnabled = false;
 	PrimaryActorTick.TickInterval = 0.005f;
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(RootComponent);
 	Mesh->OnComponentHit.AddDynamic(this, &AProjectile::OnMeshHit);
+	Mesh->SetHiddenInGame(true);
 	RootComponent = Mesh;
 }
 
 
 void AProjectile::Start()
 {
+	PrimaryActorTick.SetTickFunctionEnable(true);
 	StartPosition = GetActorLocation();
+	Mesh->SetHiddenInGame(false);
+	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+}
+
+void AProjectile::Stop()
+{
+	PrimaryActorTick.SetTickFunctionEnable(false);
+	Mesh->SetHiddenInGame(true);
+	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	UActorPoolSubsystem* Pool = GetWorld()->GetSubsystem<UActorPoolSubsystem>();
+	if (Pool->IsActorInPool(this))
+	{
+		Pool->ReturnActor(this);
+	}
+	else
+	{
+		Destroy();
+	}
 }
 
 // Called every frame
@@ -34,7 +57,7 @@ void AProjectile::Tick(float DeltaTime)
 
 	if (FVector::Dist(GetActorLocation(), StartPosition) > FireRange)
 	{
-		Destroy();
+		Stop();
 	}
 }
 
@@ -46,5 +69,5 @@ void AProjectile::OnMeshHit(class UPrimitiveComponent* OverlappedComp, class AAc
 	{
 		OtherActor->Destroy();
 	}
-	Destroy();
+	Stop();
 }

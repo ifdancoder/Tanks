@@ -55,8 +55,9 @@ public:
 	void FireSpecial();
 	int GetAmmoNow();
 	void Shot();
-
 	bool IsReadyToFire();
+	void SetVisibility(bool bIsVisible);
+	void AddAmmo(int InNumAmmo);
 
 protected:
 	virtual void BeginPlay() override;
@@ -64,6 +65,6 @@ protected:
 
 	void Reload();
 
-	int ShotsLeft = 0;
-	int AmmoNow = 0;
+	int ShotsLeft;
+	int AmmoNow;
 };

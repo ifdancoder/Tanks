@@ -7,6 +7,8 @@
 #include "Components/ArrowComponent.h"
 #include "Projectile.h"
 #include "DrawDebugHelpers.h"
+#include "Logging/LogMacros.h"
+#include "ActorPoolSubsystem.h"
 
 // Sets default values
 ACannon::ACannon()
@@ -22,6 +24,8 @@ ACannon::ACannon()
 
 	ProjectileSpawnPoint = CreateDefaultSubobject<UArrowComponent>(TEXT("Spawn point"));
 	ProjectileSpawnPoint->SetupAttachment(Mesh);
+
+	ShotsLeft = 0, AmmoNow = 0;
 }
 
 void ACannon::Fire()
@@ -72,7 +76,10 @@ void ACannon::Shot()
 		{
 			GEngine->AddOnScreenDebugMessage(INDEX_NONE, 2.f, FColor::Green, TEXT("Fire - projectile"));
 
-			AProjectile* Projectile = GetWorld()->SpawnActor<AProjectile>(ProjectileClass, ProjectileSpawnPoint->GetComponentLocation(), ProjectileSpawnPoint->GetComponentRotation());
+			UActorPoolSubsystem* Pool = GetWorld()->GetSubsystem<UActorPoolSubsystem>();
+			FTransform SpawnTransform(ProjectileSpawnPoint->GetComponentRotation(), ProjectileSpawnPoint->GetComponentLocation(), FVector::OneVector);
+			AProjectile* Projectile = Cast<AProjectile>(Pool->RetreiveActor(ProjectileClass, SpawnTransform));
+
 			if (Projectile)
 			{
 				Projectile->Start();
@@ -120,6 +127,17 @@ void ACannon::Shot()
 bool ACannon::IsReadyToFire()
 {
 	return bIsReadyToFire;
+}
+
+void ACannon::SetVisibility(bool bIsVisible)
+{
+	Mesh->SetHiddenInGame(!bIsVisible);
+}
+
+void ACannon::AddAmmo(int InNumAmmo)
+{
+	AmmoNow = FMath::Clamp(AmmoNow + InNumAmmo, 0, Ammo);
+	UE_LOG(LogTanks, Log, TEXT("AddAmmo(%d)! NumAmmo: %d"), InNumAmmo, AmmoNow);
 }
 
 // Called when the game starts or when spawned

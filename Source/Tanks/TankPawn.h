@@ -49,6 +49,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Turret")
 	TSubclassOf<class ACannon> DefaultCannonClass;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Turret")
+	TSubclassOf<class ACannon> AnotherCannonClass;
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -74,10 +77,19 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Turret")
 	void SetupCannon(TSubclassOf<class ACannon> InCannonClass);
 
+	UFUNCTION(BlueprintCallable, Category = "Turret")
+	void ChangingCannon();
+
+	UFUNCTION(BlueprintPure, Category = "Turret")
+	class ACannon* GetActiveCannon() const;
+
 private:
 
 	UPROPERTY()
-	class ACannon* Cannon = nullptr;
+	class ACannon* ActiveCannon = nullptr;
+
+	UPROPERTY()
+	class ACannon* InactiveCannon = nullptr;
 
 	float CurrentMoveForwardAxis = 0.f;
 	float TargetMoveForwardAxis = 0.f;

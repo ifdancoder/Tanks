@@ -28,6 +28,7 @@ public:
 	AProjectile();
 
 	void Start();
+	void Stop();
 	virtual void Tick(float DeltaTime) override;
 
 protected:
