@@ -41,7 +41,14 @@ void ATankPawn::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SetupCannon();
+	FActorSpawnParameters ParamsInactiveCannon;
+	ParamsInactiveCannon.Instigator = this;
+	ParamsInactiveCannon.Owner = this;
+	InactiveCannon = GetWorld()->SpawnActor<ACannon>(AnotherCannonClass, ParamsInactiveCannon);
+	InactiveCannon->AttachToComponent(CannonSpawnPoint, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	InactiveCannon->SetVisibility(false);
+
+	SetupCannon(DefaultCannonClass);
 }
 
 // Called every frame
@@ -52,14 +59,17 @@ void ATankPawn::Tick(float DeltaTime)
 	CurrentMoveForwardAxis = FMath::FInterpTo(CurrentMoveForwardAxis, TargetMoveForwardAxis, DeltaTime, MovementSmootheness);
 	FVector MoveVector = GetActorForwardVector() * CurrentMoveForwardAxis;
 	FVector NewActorLocation = GetActorLocation() + MoveVector * MoveSpeed * DeltaTime;
-	SetActorLocation(NewActorLocation);
+	SetActorLocation(NewActorLocation, true);
 
 	CurrentRotateRightAxis = FMath::FInterpTo(CurrentRotateRightAxis, TargetRotateRightAxis, DeltaTime, RotationSmootheness);
 	float Rotation = GetActorRotation().Yaw + CurrentRotateRightAxis * RotationSpeed * DeltaTime;
 	SetActorRotation(FRotator(0.f, Rotation, 0.f));
 
-	UE_LOG(LogTanks, Verbose, TEXT("Ammo: %d"), Cannon->GetAmmoNow());
+	UE_LOG(LogTanks, Verbose, TEXT("Ammo (this cannon): %d"), ActiveCannon->GetAmmoNow());
 	//UE_LOG(LogTanks, Verbose, TEXT("CurrentRotateRightAxis: %f"), CurrentRotateRightAxis);
+
+	//UE_LOG(LogTanks, Verbose, TEXT("Active cannon: %d"), ActiveCannon);
+	//UE_LOG(LogTanks, Verbose, TEXT("Inactive cannon: %d"), InactiveCannon);
 
 	FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), TurretTargetPosition);
 	FRotator CurrentRotation = TurretMesh->GetComponentRotation();
@@ -85,30 +95,53 @@ void ATankPawn::SetTurretTargetPosition(const FVector& TargetPosition)
 
 void ATankPawn::Fire()
 {
-	if (Cannon)
+	if (ActiveCannon)
 	{
-		Cannon->Fire();
+		ActiveCannon->Fire();
 	}
 }
 
 void ATankPawn::FireSpecial()
 {
-	if (Cannon)
+	if (ActiveCannon)
 	{
-		Cannon->FireSpecial();
+		ActiveCannon->FireSpecial();
 	}
 }
 
-void ATankPawn::SetupCannon()
+void ATankPawn::SetupCannon(TSubclassOf<class ACannon> InCannonClass)
 {
-	if (Cannon)
+	if (ActiveCannon)
 	{
-		Cannon->Destroy();
+		ActiveCannon->Destroy();
 	}
 
-	FActorSpawnParameters Params;
-	Params.Instigator = this;
-	Params.Owner = this;
-	Cannon = GetWorld()->SpawnActor<ACannon>(DefaultCannonClass, Params);
-	Cannon->AttachToComponent(CannonSpawnPoint, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	if (InCannonClass)
+	{
+		FActorSpawnParameters ParamsActiveCannon;
+		ParamsActiveCannon.Instigator = this;
+		ParamsActiveCannon.Owner = this;
+		ActiveCannon = GetWorld()->SpawnActor<ACannon>(InCannonClass, ParamsActiveCannon);
+		ActiveCannon->AttachToComponent(CannonSpawnPoint, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	}
+}
+
+void ATankPawn::ChangingCannon()
+{
+	Swap(ActiveCannon, InactiveCannon);
+
+	if (ActiveCannon)
+	{
+		ActiveCannon->SetVisibility(true);
+	}
+	
+	if (InactiveCannon)
+	{
+		InactiveCannon->SetVisibility(false);
+	}
+}
+
+class ACannon* ATankPawn::GetActiveCannon() const
+{
+	return ActiveCannon;
 }

@@ -26,6 +26,7 @@ private:
 	void RotateRight(float InAxisValue);
 	void Fire();
 	void FireSpecial();
+	void ChangingCannon();
 
 	UPROPERTY()
 		class ATankPawn* TankPawn;
