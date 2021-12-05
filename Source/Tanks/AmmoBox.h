@@ -16,6 +16,7 @@ public:
 	AAmmoBox();
 
 protected:
+
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	class UStaticMeshComponent* Mesh;
 
@@ -23,8 +24,9 @@ protected:
 	TSubclassOf<class ACannon> CannonClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ammo")
-	int NumAmmo;
+	int AmmoToAdd = 10;
 
 	UFUNCTION()
 	void OnMeshOverlapBegin(class UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 };

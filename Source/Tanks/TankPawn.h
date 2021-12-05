@@ -3,11 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Pawn.h"
+#include "GameStructs.h"
+#include "Damageable.h"
+#include "HealthComponent.h"
+#include "BasePawn.h"
 #include "TankPawn.generated.h"
 
 UCLASS()
-class TANKS_API ATankPawn : public APawn
+class TANKS_API ATankPawn : public ABasePawn, public IDamageable
 {
 	GENERATED_BODY()
 
@@ -16,11 +19,6 @@ public:
 	ATankPawn();
 
 protected:
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Components")
-	class UStaticMeshComponent* BodyMesh;
-
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Components")
-	class UStaticMeshComponent* TurretMesh;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	class USpringArmComponent* SpringArm;
@@ -28,29 +26,20 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	class UCameraComponent* Camera;
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Components")
-	class UArrowComponent* CannonSpawnPoint;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement|Speed")
-	float MoveSpeed = 100.f;
+	float MoveSpeed = 1000.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement|Speed")
 	float RotationSpeed = 100.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement")
-	float MovementSmootheness = 0.5f;
+	float MovementSmootheness = 5.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement")
-	float RotationSmootheness = 0.5f;
+	float RotationSmootheness = 5.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Turret")
-	float TurretRotationSmootheness = 0.5f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Turret")
-	TSubclassOf<class ACannon> DefaultCannonClass;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Turret")
-	TSubclassOf<class ACannon> AnotherCannonClass;
+	float TurretRotationSmootheness = 5.f;
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -58,6 +47,8 @@ protected:
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	virtual void TakeDamage(const FDamageData& DamageData) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void MoveForward(float InAxisValue);
@@ -69,32 +60,31 @@ public:
 	void SetTurretTargetPosition(const FVector& TargetPosition);
 
 	UFUNCTION(BlueprintCallable, Category = "Turret")
-	void Fire();
-
-	UFUNCTION(BlueprintCallable, Category = "Turret")
 	void FireSpecial();
-
-	UFUNCTION(BlueprintCallable, Category = "Turret")
-	void SetupCannon(TSubclassOf<class ACannon> InCannonClass);
 
 	UFUNCTION(BlueprintCallable, Category = "Turret")
 	void ChangingCannon();
 
 	UFUNCTION(BlueprintPure, Category = "Turret")
-	class ACannon* GetActiveCannon() const;
+	class ACannon* GetCannon() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Turret")
+	TArray<ACannon*> GetCannons() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Scoring")
+	void AddScoreForKill(float Amount);
+
+	UFUNCTION(BlueprintCallable, Category = "Scoring")
+	float GetCurrentScore() const;
 
 private:
-
-	UPROPERTY()
-	class ACannon* ActiveCannon = nullptr;
-
-	UPROPERTY()
-	class ACannon* InactiveCannon = nullptr;
 
 	float CurrentMoveForwardAxis = 0.f;
 	float TargetMoveForwardAxis = 0.f;
 	float CurrentRotateRightAxis = 0.f;
 	float TargetRotateRightAxis = 0.f;
+
+	float CurrentScore = 0.f;
 
 	FVector TurretTargetPosition;
 };

@@ -9,21 +9,14 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/ArrowComponent.h"
 #include "Cannon.h"
+#include "GameStructs.h"
+#include "Components/BoxComponent.h"
 
 // Sets default values
 ATankPawn::ATankPawn()
 {
-	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
-	BodyMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Tank body"));
-	RootComponent = BodyMesh;
-
-	TurretMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Tank turret"));
-	TurretMesh->SetupAttachment(BodyMesh);
-
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("Spring arm"));
-	SpringArm->SetupAttachment(BodyMesh);
+	SpringArm->SetupAttachment(BaseMesh);
 	SpringArm->bDoCollisionTest = false;
 	SpringArm->bInheritPitch = false;
 	SpringArm->bInheritYaw = false;
@@ -31,9 +24,6 @@ ATankPawn::ATankPawn()
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm);
-
-	CannonSpawnPoint = CreateDefaultSubobject<UArrowComponent>(TEXT("Spawn point"));
-	CannonSpawnPoint->SetupAttachment(TurretMesh);
 }
 
 // Called when the game starts or when spawned
@@ -41,14 +31,7 @@ void ATankPawn::BeginPlay()
 {
 	Super::BeginPlay();
 
-	FActorSpawnParameters ParamsInactiveCannon;
-	ParamsInactiveCannon.Instigator = this;
-	ParamsInactiveCannon.Owner = this;
-	InactiveCannon = GetWorld()->SpawnActor<ACannon>(AnotherCannonClass, ParamsInactiveCannon);
-	InactiveCannon->AttachToComponent(CannonSpawnPoint, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-	InactiveCannon->SetVisibility(false);
-
-	SetupCannon(DefaultCannonClass);
+	Cannons[CurrentCannonIndex]->ScoreOnKill.AddDynamic(this, &ATankPawn::AddScoreForKill);
 }
 
 // Called every frame
@@ -65,10 +48,10 @@ void ATankPawn::Tick(float DeltaTime)
 	float Rotation = GetActorRotation().Yaw + CurrentRotateRightAxis * RotationSpeed * DeltaTime;
 	SetActorRotation(FRotator(0.f, Rotation, 0.f));
 
-	UE_LOG(LogTanks, Verbose, TEXT("Ammo (this cannon): %d"), ActiveCannon->GetAmmoNow());
+	//UE_LOG(LogTanks, Verbose, TEXT("Ammo (this cannon): %d"), Cannons[CurrentCannonIndex]->GetAmmoNow());
 	//UE_LOG(LogTanks, Verbose, TEXT("CurrentRotateRightAxis: %f"), CurrentRotateRightAxis);
 
-	//UE_LOG(LogTanks, Verbose, TEXT("Active cannon: %d"), ActiveCannon);
+	//UE_LOG(LogTanks, Verbose, TEXT("Active cannon: %d"), Cannons[CurrentCannonIndex]);
 	//UE_LOG(LogTanks, Verbose, TEXT("Inactive cannon: %d"), InactiveCannon);
 
 	FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), TurretTargetPosition);
@@ -76,6 +59,19 @@ void ATankPawn::Tick(float DeltaTime)
 	TargetRotation.Roll = CurrentRotation.Roll;
 	TargetRotation.Pitch = CurrentRotation.Pitch;
 	TurretMesh->SetWorldRotation(FMath::RInterpConstantTo(CurrentRotation, TargetRotation, DeltaTime, TurretRotationSmootheness));
+
+	/*for (int i = 0; i < Cannons.Num(); i++)
+	{
+		UE_LOG(LogTanks, Verbose, TEXT("Cs%d: %s"), i, (*Cannons[0]).IsHidden() ? TEXT("true") : TEXT("false"));
+	}*/
+
+	UE_LOG(LogTanks, Verbose, TEXT("Score: %f"), GetCurrentScore());
+}
+
+void ATankPawn::TakeDamage(const FDamageData& DamageData)
+{
+	//UE_LOG(LogTanks, Log, TEXT("Tank taked damage"));
+	HealthComponent->TakeDamage(DamageData);
 }
 
 void ATankPawn::MoveForward(float InAxisValue)
@@ -93,55 +89,52 @@ void ATankPawn::SetTurretTargetPosition(const FVector& TargetPosition)
 	TurretTargetPosition = TargetPosition;
 }
 
-void ATankPawn::Fire()
-{
-	if (ActiveCannon)
-	{
-		ActiveCannon->Fire();
-	}
-}
-
 void ATankPawn::FireSpecial()
 {
-	if (ActiveCannon)
+	if (Cannons[CurrentCannonIndex])
 	{
-		ActiveCannon->FireSpecial();
-	}
-}
-
-void ATankPawn::SetupCannon(TSubclassOf<class ACannon> InCannonClass)
-{
-	if (ActiveCannon)
-	{
-		ActiveCannon->Destroy();
-	}
-
-	if (InCannonClass)
-	{
-		FActorSpawnParameters ParamsActiveCannon;
-		ParamsActiveCannon.Instigator = this;
-		ParamsActiveCannon.Owner = this;
-		ActiveCannon = GetWorld()->SpawnActor<ACannon>(InCannonClass, ParamsActiveCannon);
-		ActiveCannon->AttachToComponent(CannonSpawnPoint, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		Cannons[CurrentCannonIndex]->FireSpecial();
 	}
 }
 
 void ATankPawn::ChangingCannon()
 {
-	Swap(ActiveCannon, InactiveCannon);
+	if (Cannons.Num() > 1)
+	{
+		//UE_LOG(LogTanks, Verbose, TEXT("Num: %d"), Cannons.Num());
 
-	if (ActiveCannon)
-	{
-		ActiveCannon->SetVisibility(true);
+		//UE_LOG(LogTanks, Verbose, TEXT("1st cannon isn't visible"), Cannons.Num());
+		Cannons[CurrentCannonIndex]->SetVisibility(false);
+		CurrentCannonIndex = (CurrentCannonIndex + 1) % Cannons.Num();
+		//UE_LOG(LogTanks, Verbose, TEXT("2rd cannon is visible and active"), Cannons.Num());
+		Cannons[CurrentCannonIndex]->SetVisibility(true);
 	}
-	
-	if (InactiveCannon)
+
+	//UE_LOG(LogTanks, Verbose, TEXT("Cannon now: %s"), *(Cannons[CurrentCannonIndex]->GetName()));
+	/*UE_LOG(LogTanks, Verbose, TEXT("Cannons (%d):"), Cannons.Num());
+	for (int i = 0; i < Cannons.Num(); i++)
 	{
-		InactiveCannon->SetVisibility(false);
-	}
+		UE_LOG(LogTanks, Verbose, TEXT("Cannon %s (%d): Ammo: %d"), *(Cannons[i]->GetName()), i + 1, Cannons[i]->GetAmmoNow());
+		UE_LOG(LogTanks, Verbose, TEXT(""));
+	}*/
 }
 
-class ACannon* ATankPawn::GetActiveCannon() const
+class ACannon* ATankPawn::GetCannon() const
 {
-	return ActiveCannon;
+	return Cannons[CurrentCannonIndex];
+}
+
+TArray<ACannon*> ATankPawn::GetCannons() const
+{
+	return Cannons;
+}
+
+float ATankPawn::GetCurrentScore() const
+{
+	return CurrentScore;
+}
+
+void ATankPawn::AddScoreForKill(float Amount)
+{
+	CurrentScore += Amount;
 }
