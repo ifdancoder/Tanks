@@ -64,8 +64,7 @@ void ATankPawn::Tick(float DeltaTime)
 	{
 		UE_LOG(LogTanks, Verbose, TEXT("Cs%d: %s"), i, (*Cannons[0]).IsHidden() ? TEXT("true") : TEXT("false"));
 	}*/
-
-	UE_LOG(LogTanks, Verbose, TEXT("Score: %f"), GetCurrentScore());
+	UE_LOG(LogTanks, Log, TEXT("Score: %f"), GetCurrentScore());
 }
 
 void ATankPawn::TakeDamage(const FDamageData& DamageData)

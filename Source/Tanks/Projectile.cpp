@@ -90,14 +90,14 @@ void AProjectile::OnMeshHit(class UPrimitiveComponent* OverlappedComp, class AAc
 
 		if (IScorable* Scorable = Cast<IScorable>(OtherActor))
 		{
-			if (OtherActor->Destroy())
-				if (OtherActor->IsActorBeingDestroyed())
+			if (OtherActor->IsActorBeingDestroyed())
+			{
+				UE_LOG(LogTanks, Verbose, TEXT("Destroyed: %s"), *(OtherActor->GetName()));
+				if (GetScoreOnKill.IsBound())
 				{
-					if (GetScoreOnKill.IsBound())
-					{
-						GetScoreOnKill.Broadcast(Scorable->GetScoreForKill());
-					}
+					GetScoreOnKill.Broadcast(Scorable->GetScoreForKill());
 				}
+			}
 		}
 	}
 
