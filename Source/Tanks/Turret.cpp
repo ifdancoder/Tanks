@@ -45,7 +45,7 @@ void ATurret::Targeting()
 		RotateToPlayer();
 	}
 
-	if (CanFire() && Cannons[CurrentCannonIndex] && Cannons[CurrentCannonIndex]->IsReadyToFire())
+	if (CanFire() && Cannons[CurrentCannonIndex] && Cannons[CurrentCannonIndex]->IsReadyToFire() && IsPlayerInRange())
 	{
 		Fire();
 	}
