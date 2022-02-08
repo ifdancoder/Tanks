@@ -9,6 +9,9 @@
 #include "Cannon.h"
 #include <Components/StaticMeshComponent.h>
 #include "Logging/LogMacros.h"
+#include <Particles/ParticleSystemComponent.h>
+#include <Components/AudioComponent.h>
+#include "ActorPoolSubsystem.h"
 
 // Sets default values
 ABasePawn::ABasePawn()
@@ -31,6 +34,15 @@ ABasePawn::ABasePawn()
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
 	HealthComponent->OnDie.AddDynamic(this, &ABasePawn::OnDie);
 	HealthComponent->OnHealthChanged.AddDynamic(this, &ABasePawn::OnHealthChanged);
+
+	VisualEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("Shoot Effect"));
+	VisualEffect->SetupAttachment(BaseMesh);
+
+	AudioEffect = CreateDefaultSubobject<UAudioComponent>(TEXT("Audio Effect"));
+	AudioEffect->SetupAttachment(BaseMesh);
+
+	LootSpawnPoint = CreateDefaultSubobject<UArrowComponent>(TEXT("Spawn point"));
+	LootSpawnPoint->SetupAttachment(BaseMesh);
 }
 
 // Called when the game starts or when spawned
@@ -55,7 +67,28 @@ void ABasePawn::OnHealthChanged_Implementation(float DamageAmount)
 
 void ABasePawn::OnDie_Implementation()
 {
+	if (!bIsDestroyed)
+	{
+		VisualEffect->ActivateSystem();
+		AudioEffect->Play();
+
+		UActorPoolSubsystem* Pool = GetWorld()->GetSubsystem<UActorPoolSubsystem>();
+		FTransform SpawnTransform(LootSpawnPoint->GetComponentRotation(), LootSpawnPoint->GetComponentLocation(), FVector::OneVector);
+		AAmmoBox* AmmoBox = Cast<AAmmoBox>(Pool->RetreiveActor(LootClass, SpawnTransform));
+
+		GetWorld()->GetTimerManager().SetTimer(DestroyTimerHandle, this, &ABasePawn::Destroying, DestroyingDelay, false);
+
+		bIsDestroyed = true;
+	}
+}
+
+void ABasePawn::Destroying()
+{
 	Destroy();
+	for (const auto Cannon : Cannons)
+	{
+		Cannon->Destroy();
+	}
 }
 
 void ABasePawn::Fire()

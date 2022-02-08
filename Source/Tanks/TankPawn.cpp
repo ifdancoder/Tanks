@@ -64,7 +64,7 @@ void ATankPawn::Tick(float DeltaTime)
 	{
 		UE_LOG(LogTanks, Verbose, TEXT("Cs%d: %s"), i, (*Cannons[0]).IsHidden() ? TEXT("true") : TEXT("false"));
 	}*/
-	UE_LOG(LogTanks, Log, TEXT("Score: %f"), GetCurrentScore());
+	//UE_LOG(LogTanks, Log, TEXT("Score: %f"), GetCurrentScore());
 }
 
 void ATankPawn::TakeDamage(const FDamageData& DamageData)
@@ -121,6 +121,11 @@ void ATankPawn::ChangingCannon()
 class ACannon* ATankPawn::GetCannon() const
 {
 	return Cannons[CurrentCannonIndex];
+}
+
+FVector ATankPawn::GetTurretForwardVector()
+{
+	return TurretMesh->GetForwardVector();
 }
 
 TArray<ACannon*> ATankPawn::GetCannons() const

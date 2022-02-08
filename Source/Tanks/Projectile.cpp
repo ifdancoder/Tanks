@@ -9,6 +9,7 @@
 #include "GameStructs.h"
 #include "Scorable.h"
 #include "TankPawn.h"
+#include <Components/AudioComponent.h>
 
 // Sets default values
 AProjectile::AProjectile()
@@ -23,6 +24,9 @@ AProjectile::AProjectile()
 	Mesh->OnComponentHit.AddDynamic(this, &AProjectile::OnMeshHit);
 	Mesh->SetHiddenInGame(true);
 	RootComponent = Mesh;
+
+	AudioEffect = CreateDefaultSubobject<UAudioComponent>(TEXT("Audio Effect"));
+	AudioEffect->SetupAttachment(Mesh);
 }
 
 
@@ -82,6 +86,8 @@ void AProjectile::OnMeshHit(class UPrimitiveComponent* OverlappedComp, class AAc
 	}
 	else if (IDamageable* Damageable = Cast<IDamageable>(OtherActor))
 	{
+		AudioEffect->Play();
+
 		FDamageData DamageData;
 		DamageData.DamageValue = Damage;
 		DamageData.Instigator = GetInstigator();

@@ -12,6 +12,7 @@
 #include "Tanks.h"
 #include "HealthComponent.h"
 #include "Logging/LogMacros.h"
+#include <DrawDebugHelpers.h>
 
 // Sets default values
 ATurret::ATurret()
@@ -65,6 +66,25 @@ void ATurret::RotateToPlayer()
 
 bool ATurret::IsPlayerInRange()
 {
+	FHitResult HitResult;
+	FVector TraceStart = GetActorLocation();
+	FVector TraceEnd = PlayerPawn->GetActorLocation();
+	FCollisionQueryParams TraceParams = FCollisionQueryParams(FName(TEXT("AI Vission Trace")), true, this);
+	TraceParams.bReturnPhysicalMaterial = false;
+
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, TraceParams))
+	{
+		DrawDebugLine(GetWorld(), TraceStart, HitResult.Location, FColor::Red, false, 0.1f, 0, 5);
+		if (HitResult.Actor != PlayerPawn)
+		{
+			return false;
+		}
+	}
+	else
+	{
+		DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Green, false, 0.1f, 0, 5);
+	}
+
 	return FVector::DistSquared(PlayerPawn->GetActorLocation(), GetActorLocation()) <= FMath::Square(TargetingRange);
 }
 
@@ -74,6 +94,7 @@ bool ATurret::CanFire()
 	FVector DirToPlayer = PlayerPawn->GetActorLocation() - GetActorLocation();
 	DirToPlayer.Normalize();
 	float AimAngle = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(TargetingDir, DirToPlayer)));
+
 	return AimAngle <= Accuracy;
 }
 
