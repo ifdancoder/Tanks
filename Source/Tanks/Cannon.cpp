@@ -10,6 +10,8 @@
 #include "Logging/LogMacros.h"
 #include "ActorPoolSubsystem.h"
 #include "Damageable.h"
+#include <Particles/ParticleSystemComponent.h>
+#include <Components/AudioComponent.h>
 
 // Sets default values
 ACannon::ACannon()
@@ -25,6 +27,12 @@ ACannon::ACannon()
 
 	ProjectileSpawnPoint = CreateDefaultSubobject<UArrowComponent>(TEXT("Spawn point"));
 	ProjectileSpawnPoint->SetupAttachment(Mesh);
+
+	ShootEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("Shoot Effect"));
+	ShootEffect->SetupAttachment(ProjectileSpawnPoint);
+
+	AudioEffect = CreateDefaultSubobject<UAudioComponent>(TEXT("Audio Effect"));
+	AudioEffect->SetupAttachment(ProjectileSpawnPoint);
 
 	ShotsLeft = 0, AmmoNow = 0;
 }
@@ -88,6 +96,25 @@ void ACannon::Shot()
 				Projectile->GetScoreOnKill.AddDynamic(this, &ACannon::GetScoreOnKill);
 				Projectile->SetInstigator(GetInstigator());
 				Projectile->Start();
+
+				ShootEffect->ActivateSystem();
+				AudioEffect->Play();
+
+				if (GetOwner() && GetOwner() == GetWorld()->GetFirstPlayerController()->GetPawn())
+				{
+					if (ShootForceEffect)
+					{
+						FForceFeedbackParameters shootForceEffectParams;
+						shootForceEffectParams.bLooping = false;
+						shootForceEffectParams.Tag = "ShootForceEffectParams";
+						GetWorld()->GetFirstPlayerController()->ClientPlayForceFeedback(ShootForceEffect, shootForceEffectParams);
+					}
+
+					if (ShootShake)
+					{
+						GetWorld()->GetFirstPlayerController()->ClientPlayCameraShake(ShootShake);
+					}
+				}
 			}
 		}
 		else if (Type == ECannonType::FireTrace)

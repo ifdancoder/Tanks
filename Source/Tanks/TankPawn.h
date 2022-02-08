@@ -41,6 +41,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Turret")
 	float TurretRotationSmootheness = 5.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Move params|Patrol points", Meta = (MakeEditWidget = true))
+	TArray<FVector> PatrollingPoints;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Move params|Accurency")
+	float MovementAccuracy = 50;
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -68,6 +74,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Turret")
 	class ACannon* GetCannon() const;
 
+	UFUNCTION(BlueprintPure, Category = "Turret")
+	FVector GetTurretForwardVector();
+
 	UFUNCTION(BlueprintCallable, Category = "Turret")
 	TArray<ACannon*> GetCannons() const;
 
@@ -76,6 +85,19 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Scoring")
 	float GetCurrentScore() const;
+
+	UFUNCTION(BlueprintPure, Category = "AI|MoveParams")
+	TArray<FVector> GetPatrollingPoints()
+	{
+		return PatrollingPoints;
+	}
+
+	UFUNCTION(BlueprintPure, Category = "AI|MoveParams")
+	float GetMovementAccuracy()
+	{
+		return MovementAccuracy;
+	}
+
 
 private:
 

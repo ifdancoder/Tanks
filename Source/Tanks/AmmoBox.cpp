@@ -6,6 +6,7 @@
 #include "Tanks.h"
 #include "Cannon.h"
 #include "Logging/LogMacros.h"
+#include "ActorPoolSubsystem.h"
 
 // Sets default values
 AAmmoBox::AAmmoBox()
@@ -46,6 +47,18 @@ void AAmmoBox::OnMeshOverlapBegin(class UPrimitiveComponent* OverlappedComp, AAc
 			PlayerPawn->SetupCannon(CannonClass, AmmoToAdd);
 		}
 
-		Destroy();
+		PrimaryActorTick.SetTickFunctionEnable(false);
+		Mesh->SetHiddenInGame(true);
+		Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		UActorPoolSubsystem* Pool = GetWorld()->GetSubsystem<UActorPoolSubsystem>();
+		if (Pool->IsActorInPool(this))
+		{
+			Pool->ReturnActor(this);
+		}
+		else
+		{
+			Destroy();
+		}
 	}
 }

@@ -22,12 +22,21 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 
 private:
+	bool bIsMouse = true;
+	float HorisontalAxis = 0;
+	float VerticalAxis = 0;
+
+	void TurretForward(float InAxisValue);
+	void TurretRight(float InAxisValue);
 	void MoveForward(float InAxisValue);
 	void RotateRight(float InAxisValue);
 	void Fire();
 	void FireSpecial();
 	void ChangingCannon();
+	void ChangingMethod();
 
 	UPROPERTY()
 		class ATankPawn* TankPawn;
+
+	FVector TargetTurretDirection;
 };

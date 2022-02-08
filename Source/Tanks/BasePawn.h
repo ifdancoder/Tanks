@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "AmmoBox.h"
 #include "BasePawn.generated.h"
 
 UCLASS()
@@ -14,6 +15,9 @@ class TANKS_API ABasePawn : public APawn
 public:
 	// Sets default values for this pawn's properties
 	ABasePawn();
+
+private:
+	FTimerHandle DestroyTimerHandle;
 
 protected:
 	// Called when the game starts or when spawned
@@ -34,11 +38,22 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Components")
 	class UBoxComponent* HitCollider;
 
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Components")
+	class UArrowComponent* LootSpawnPoint;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Loot params")
+	TSubclassOf<class AAmmoBox> LootClass;
+
 	UFUNCTION(BlueprintNativeEvent, Category = "Health")
 	void OnHealthChanged(float DamageAmount);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Health")
 	void OnDie();
+
+	void Destroying();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "DestroyingDelay")
+	float DestroyingDelay = 1.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Turret")
 	TSubclassOf<class ACannon> DefaultCannonClass;
@@ -53,7 +68,16 @@ protected:
 	int CurrentCannonIndex = 0;
 
 	UPROPERTY()
-	TArray<ACannon*> Cannons;
+	bool bIsDestroyed = false;
+
+	UPROPERTY()
+	TArray<class ACannon*> Cannons;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Components")
+	class UParticleSystemComponent* VisualEffect;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Components")
+	class UAudioComponent* AudioEffect;
 
 public:
 	// Called every frame
