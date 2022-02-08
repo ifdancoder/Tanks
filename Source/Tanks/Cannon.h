@@ -7,6 +7,8 @@
 #include "GameStructs.h"
 #include "Cannon.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FScoreOnKill, float, Amount);
+
 UCLASS()
 class TANKS_API ACannon : public AActor
 {
@@ -25,9 +27,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (EditCondition = "Type == ECannonType::FireTrace", EditConditionHides), Category = "Fire params")
 	float FireRange = 1000.f;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (EditCondition = "Type == ECannonType::FireTrace", EditConditionHides), Category = "Fire params")
-	float FireDamage = 1.f;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Fire params")
 	int Ammo = 30;
 
@@ -36,6 +35,10 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (EditCondition = "SerialShots > 1", EditConditionHides), Category = "Fire params")
 	float TimeToReloadSeries = 0.25;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Damage")
+	float Damage = 1.f;
+
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Fire params")
 	ECannonType Type = ECannonType::FireProjectile;
@@ -51,6 +54,12 @@ private:
 public:
 	ACannon();
 
+	UPROPERTY()
+	FScoreOnKill ScoreOnKill;
+
+	UFUNCTION()
+	void GetScoreOnKill(float Amount);
+
 	void Fire();
 	void FireSpecial();
 	int GetAmmoNow();
@@ -58,6 +67,7 @@ public:
 	bool IsReadyToFire();
 	void SetVisibility(bool bIsVisible);
 	void AddAmmo(int InNumAmmo);
+	void SetAmmo(int NumAmmo);
 
 protected:
 	virtual void BeginPlay() override;

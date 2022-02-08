@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "Projectile.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGetScoreOnKill, float, Amount);
+
 UCLASS()
 class TANKS_API AProjectile : public AActor
 {
@@ -24,12 +26,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Damage")
 	float Damage = 1.f;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Scoring")
+	float Score = 10.f;
+
 public:
 	AProjectile();
 
 	void Start();
 	void Stop();
 	virtual void Tick(float DeltaTime) override;
+
+	UPROPERTY()
+	FGetScoreOnKill GetScoreOnKill;
 
 protected:
 	UFUNCTION()

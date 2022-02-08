@@ -5,6 +5,10 @@
 #include "Components/StaticMeshComponent.h"
 #include "Tanks.h"
 #include "ActorPoolSubsystem.h"
+#include "Damageable.h"
+#include "GameStructs.h"
+#include "Scorable.h"
+#include "TankPawn.h"
 
 // Sets default values
 AProjectile::AProjectile()
@@ -32,6 +36,7 @@ void AProjectile::Start()
 
 void AProjectile::Stop()
 {
+	GetScoreOnKill.Clear();
 	PrimaryActorTick.SetTickFunctionEnable(false);
 	Mesh->SetHiddenInGame(true);
 	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -63,11 +68,38 @@ void AProjectile::Tick(float DeltaTime)
 
 void AProjectile::OnMeshHit(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& HitResult)
 {
-	UE_LOG(LogTanks, Warning, TEXT("Projectile %s collided with %s. "), *GetName(), *OtherActor->GetName());
+	//UE_LOG(LogTanks, Warning, TEXT("Projectile %s collided with %s. "), *GetName(), *OtherActor->GetName());
+
+	if (OtherActor == GetInstigator())
+	{
+		Destroy();
+		return;
+	}
 
 	if (OtherActor && OtherComp && OtherComp->GetCollisionObjectType() == ECC_Destructible)
 	{
 		OtherActor->Destroy();
 	}
+	else if (IDamageable* Damageable = Cast<IDamageable>(OtherActor))
+	{
+		FDamageData DamageData;
+		DamageData.DamageValue = Damage;
+		DamageData.Instigator = GetInstigator();
+		DamageData.DamageMaker = this;
+		Damageable->TakeDamage(DamageData);
+
+		if (IScorable* Scorable = Cast<IScorable>(OtherActor))
+		{
+			if (OtherActor->IsActorBeingDestroyed())
+			{
+				UE_LOG(LogTanks, Verbose, TEXT("Destroyed: %s"), *(OtherActor->GetName()));
+				if (GetScoreOnKill.IsBound())
+				{
+					GetScoreOnKill.Broadcast(Scorable->GetScoreForKill());
+				}
+			}
+		}
+	}
+
 	Stop();
 }

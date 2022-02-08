@@ -9,6 +9,7 @@
 #include "DrawDebugHelpers.h"
 #include "Logging/LogMacros.h"
 #include "ActorPoolSubsystem.h"
+#include "Damageable.h"
 
 // Sets default values
 ACannon::ACannon()
@@ -69,6 +70,8 @@ int ACannon::GetAmmoNow()
 
 void ACannon::Shot()
 {
+
+	//UE_LOG(LogTanks, Verbose, TEXT("Rate (this cannon): %f"), FireRate);
 	bIsReadyToFire = false;
 	if(AmmoNow)
 	{
@@ -82,6 +85,8 @@ void ACannon::Shot()
 
 			if (Projectile)
 			{
+				Projectile->GetScoreOnKill.AddDynamic(this, &ACannon::GetScoreOnKill);
+				Projectile->SetInstigator(GetInstigator());
 				Projectile->Start();
 			}
 		}
@@ -97,9 +102,20 @@ void ACannon::Shot()
 			if (GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, TraceParams))
 			{
 				DrawDebugLine(GetWorld(), TraceStart, HitResult.Location, FColor::Green, false, 0.5f, 0, 5.f);
-				if (HitResult.Actor.IsValid() && HitResult.Component.IsValid(), HitResult.Component->GetCollisionObjectType() == ECC_Destructible)
+				if (HitResult.Actor.IsValid() && HitResult.Component.IsValid())
 				{
-					HitResult.Actor->Destroy();
+					if (HitResult.Component->GetCollisionObjectType() == ECC_Destructible)
+					{
+						HitResult.Actor->Destroy();
+					}
+					else if (IDamageable* Damageable = Cast<IDamageable>(HitResult.Actor))
+					{
+						FDamageData DamageData;
+						DamageData.DamageValue = Damage;
+						DamageData.Instigator = GetInstigator();
+						DamageData.DamageMaker = this;
+						Damageable->TakeDamage(DamageData);
+					}
 				}
 			}
 			else
@@ -119,9 +135,14 @@ void ACannon::Shot()
 	}
 	else
 	{
-		GetWorld()->GetTimerManager().SetTimer(ReloadTimerHandle, this, &ACannon::Reload, TimeToReloadSeries, false);
+		GetWorld()->GetTimerManager().SetTimer(ReloadTimerHandle, this, &ACannon::Reload, FireRate, false);
 		GEngine->AddOnScreenDebugMessage(INDEX_NONE, 2.f, FColor::Red, TEXT("Not enough ammo"));
 	}
+}
+
+void ACannon::GetScoreOnKill(float Amount)
+{
+	ScoreOnKill.Broadcast(Amount);
 }
 
 bool ACannon::IsReadyToFire()
@@ -137,14 +158,19 @@ void ACannon::SetVisibility(bool bIsVisible)
 void ACannon::AddAmmo(int InNumAmmo)
 {
 	AmmoNow = FMath::Clamp(AmmoNow + InNumAmmo, 0, Ammo);
-	UE_LOG(LogTanks, Log, TEXT("AddAmmo(%d)! NumAmmo: %d"), InNumAmmo, AmmoNow);
+	//UE_LOG(LogTanks, Log, TEXT("AddAmmo(%d)! NumAmmo: %d"), InNumAmmo, AmmoNow);
+}
+
+void ACannon::SetAmmo(int NumAmmo)
+{
+	Ammo = NumAmmo;
+	AmmoNow = NumAmmo;
 }
 
 // Called when the game starts or when spawned
 void ACannon::BeginPlay()
 {
 	Super::BeginPlay();
-
 	bIsReadyToFire = true;
 	AmmoNow = Ammo;
 }
