@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include <Particles/ParticleSystemComponent.h>
 #include "Projectile.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGetScoreOnKill, float, Amount);
@@ -18,7 +19,10 @@ protected:
 	class UStaticMeshComponent* Mesh;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Components")
-	class UAudioComponent* AudioEffect;
+	class UParticleSystemComponent* HitVisualEffect;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Components")
+	class UAudioComponent* HitAudioEffect;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement")
 	float MoveSpeed = 100.f;
@@ -32,11 +36,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Scoring")
 	float Score = 10.f;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Effects")
+	float DestroyingEffectsTimer = 0.5f;
+
 public:
 	AProjectile();
 
 	void Start();
 	void Stop();
+	void StoppingEffects();
 	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY()
@@ -48,4 +56,5 @@ protected:
 
 private:
 	FVector StartPosition;
+	FTimerHandle DestroyingEffectsTimerHandle;
 };

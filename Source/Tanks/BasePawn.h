@@ -74,10 +74,10 @@ protected:
 	TArray<class ACannon*> Cannons;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Components")
-	class UParticleSystemComponent* VisualEffect;
+	class UParticleSystemComponent* DestroyingVisualEffect;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadWrite, Category = "Components")
-	class UAudioComponent* AudioEffect;
+	class UAudioComponent* DestroyingAudioEffect;
 
 public:
 	// Called every frame
