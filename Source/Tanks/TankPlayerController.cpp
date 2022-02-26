@@ -59,11 +59,11 @@ void ATankPlayerController::Tick(float DeltaSeconds)
 	TargetTurretDirection.Z = 0.f;
 	TargetTurretDirection.Normalize();
 
-	UE_LOG(LogTemp, Warning, TEXT("%f %f %f"), TargetTurretDirection.X, TargetTurretDirection.Y, TargetTurretDirection.Z);
+	//UE_LOG(LogTemp, Warning, TEXT("%f %f %f"), TargetTurretDirection.X, TargetTurretDirection.Y, TargetTurretDirection.Z);
 
 	FVector TurretTargetPosition = TankPawn->GetActorLocation() + TargetTurretDirection * 1000.f;
 
-	DrawDebugLine(GetWorld(), TankPawn->GetActorLocation(), TurretTargetPosition, FColor::Green, false, 0.1f, 0, 5.f);
+	//DrawDebugLine(GetWorld(), TankPawn->GetActorLocation(), TurretTargetPosition, FColor::Green, false, 0.1f, 0, 5.f);
 
 	TankPawn->SetTurretTargetPosition(TurretTargetPosition);
 }

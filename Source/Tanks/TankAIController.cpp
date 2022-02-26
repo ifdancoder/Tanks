@@ -4,24 +4,19 @@
 #include "TankAIController.h"
 #include "TankPawn.h"
 #include "DrawDebugHelpers.h"
+#include <Engine/TargetPoint.h>
 
 void ATankAIController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	TankPawn = Cast<ATankPawn>(GetPawn());
-	if (TankPawn)
-	{
-		for (const FVector& Point : TankPawn->GetPatrollingPoints())
-		{
-			PatrollingPoints.Add(TankPawn->GetActorLocation() + Point);
-		}
-	}
 }
 
 void ATankAIController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	TankPawn = Cast<ATankPawn>(GetPawn());
 
 	if (TankPawn)
 	{
@@ -32,6 +27,8 @@ void ATankAIController::Tick(float DeltaTime)
 
 void ATankAIController::MoveToNextPoint()
 {
+	const TArray<class ATargetPoint*>& PatrollingPoints = TankPawn->GetPatrollingPoints();
+
 	if (PatrollingPoints.Num() == 0)
 	{
 		return;
@@ -39,7 +36,7 @@ void ATankAIController::MoveToNextPoint()
 
 	TankPawn->MoveForward(1.f);
 	FVector PawnLocation = TankPawn->GetActorLocation();
-	FVector CurrentPoint = PatrollingPoints[CurrentPatrolPointIndex];
+	FVector CurrentPoint = PatrollingPoints[CurrentPatrolPointIndex]->GetActorLocation();
 	if (FVector::DistSquared(PawnLocation, CurrentPoint) <= FMath::Square(TankPawn->GetMovementAccuracy()))
 	{
 		CurrentPatrolPointIndex++;
@@ -54,7 +51,7 @@ void ATankAIController::MoveToNextPoint()
 	FVector ForwardDirection = TankPawn->GetActorForwardVector();
 	FVector RightDirection = TankPawn->GetActorRightVector();
 
-	DrawDebugLine(GetWorld(), PawnLocation, CurrentPoint, FColor::Green, false, 0.1f, 0, 5);
+	//DrawDebugLine(GetWorld(), PawnLocation, CurrentPoint, FColor::Green, false, 0.1f, 0, 5);
 
 	float ForwardAngle = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(ForwardDirection, MoveDirection)));
 	float RightAngle = FMath::RadiansToDegrees(FMath::Acos(FVector::DotProduct(RightDirection, MoveDirection)));
@@ -88,16 +85,16 @@ void ATankAIController::Targeting()
 
 		if (GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, TraceParams))
 		{
-			DrawDebugLine(GetWorld(), TraceStart, HitResult.Location, FColor::Red, false, 0.1f, 0, 5);
+			//DrawDebugLine(GetWorld(), TraceStart, HitResult.Location, FColor::Red, false, 0.1f, 0, 5);
 			if (HitResult.Actor != PlayerPawn)
 			{
 				return;
 			}
 		}
-		else
+		/*else
 		{
 			DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Red, false, 0.1f, 0, 5);
-		}
+		}*/
 
 		TankPawn->SetTurretTargetPosition(PlayerPawn->GetActorLocation());
 

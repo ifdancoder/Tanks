@@ -25,13 +25,17 @@ AProjectile::AProjectile()
 	Mesh->SetHiddenInGame(true);
 	RootComponent = Mesh;
 
-	AudioEffect = CreateDefaultSubobject<UAudioComponent>(TEXT("Audio Effect"));
-	AudioEffect->SetupAttachment(Mesh);
+	HitVisualEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("Hit Visual Effect"));
+	HitVisualEffect->SetupAttachment(Mesh);
+
+	HitAudioEffect = CreateDefaultSubobject<UAudioComponent>(TEXT("Hit Audio Effect"));
+	HitAudioEffect->SetupAttachment(Mesh);
 }
 
 
 void AProjectile::Start()
 {
+	HitVisualEffect->DeactivateSystem();
 	PrimaryActorTick.SetTickFunctionEnable(true);
 	StartPosition = GetActorLocation();
 	Mesh->SetHiddenInGame(false);
@@ -54,6 +58,13 @@ void AProjectile::Stop()
 	{
 		Destroy();
 	}
+
+	GetWorld()->GetTimerManager().SetTimer(DestroyingEffectsTimerHandle, this, &AProjectile::StoppingEffects, DestroyingEffectsTimer, false);
+}
+
+void AProjectile::StoppingEffects()
+{
+	HitVisualEffect->DeactivateSystem();
 }
 
 // Called every frame
@@ -72,7 +83,7 @@ void AProjectile::Tick(float DeltaTime)
 
 void AProjectile::OnMeshHit(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& HitResult)
 {
-	//UE_LOG(LogTanks, Warning, TEXT("Projectile %s collided with %s. "), *GetName(), *OtherActor->GetName());
+	UE_LOG(LogTanks, Warning, TEXT("Projectile %s collided with %s. "), *GetName(), *OtherActor->GetName());
 
 	if (OtherActor == GetInstigator())
 	{
@@ -86,7 +97,8 @@ void AProjectile::OnMeshHit(class UPrimitiveComponent* OverlappedComp, class AAc
 	}
 	else if (IDamageable* Damageable = Cast<IDamageable>(OtherActor))
 	{
-		AudioEffect->Play();
+		HitAudioEffect->Play();
+		HitVisualEffect->ActivateSystem();
 
 		FDamageData DamageData;
 		DamageData.DamageValue = Damage;

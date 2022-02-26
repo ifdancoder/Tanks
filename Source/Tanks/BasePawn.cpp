@@ -25,6 +25,12 @@ ABasePawn::ABasePawn()
 	TurretMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TurretMesh"));
 	TurretMesh->SetupAttachment(BaseMesh);
 
+	DestroyingVisualEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("Destroying Pawn Visual Effect"));
+	DestroyingVisualEffect->SetupAttachment(BaseMesh);
+
+	DestroyingAudioEffect = CreateDefaultSubobject<UAudioComponent>(TEXT("Destroying Pawn Audio Effect"));
+	DestroyingAudioEffect->SetupAttachment(BaseMesh);
+
 	CannonSpawnPoint = CreateDefaultSubobject<UArrowComponent>(TEXT("CannonSpawn"));
 	CannonSpawnPoint->SetupAttachment(TurretMesh);
 
@@ -34,12 +40,6 @@ ABasePawn::ABasePawn()
 	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComponent"));
 	HealthComponent->OnDie.AddDynamic(this, &ABasePawn::OnDie);
 	HealthComponent->OnHealthChanged.AddDynamic(this, &ABasePawn::OnHealthChanged);
-
-	VisualEffect = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("Shoot Effect"));
-	VisualEffect->SetupAttachment(BaseMesh);
-
-	AudioEffect = CreateDefaultSubobject<UAudioComponent>(TEXT("Audio Effect"));
-	AudioEffect->SetupAttachment(BaseMesh);
 
 	LootSpawnPoint = CreateDefaultSubobject<UArrowComponent>(TEXT("Spawn point"));
 	LootSpawnPoint->SetupAttachment(BaseMesh);
@@ -69,8 +69,8 @@ void ABasePawn::OnDie_Implementation()
 {
 	if (!bIsDestroyed)
 	{
-		VisualEffect->ActivateSystem();
-		AudioEffect->Play();
+		DestroyingVisualEffect->ActivateSystem();
+		DestroyingAudioEffect->Play();
 
 		UActorPoolSubsystem* Pool = GetWorld()->GetSubsystem<UActorPoolSubsystem>();
 		FTransform SpawnTransform(LootSpawnPoint->GetComponentRotation(), LootSpawnPoint->GetComponentLocation(), FVector::OneVector);
@@ -89,6 +89,8 @@ void ABasePawn::Destroying()
 	{
 		Cannon->Destroy();
 	}
+
+	GetWorld()->GetTimerManager().ClearTimer(DestroyTimerHandle);
 }
 
 void ABasePawn::Fire()
